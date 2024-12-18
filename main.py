@@ -98,7 +98,7 @@ def main(page: ft.Page):
     # Add components to the page
     page.add(
         ft.Text(
-            "⏱️ Nine2Shine - Office Exit Time Calculator",
+            "⏱️ Nine2Shine",
             size=28,
             weight=ft.FontWeight.BOLD,
             color="blue",
