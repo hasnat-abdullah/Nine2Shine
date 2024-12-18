@@ -4,10 +4,15 @@ from datetime import datetime, timedelta
 
 def main(page: ft.Page):
     # Set a modern, professional theme
-    page.title = "Nine2Shine - Office Exit Time Calculator"
+    # page.fonts = {
+    #     "Quicksand": "/fonts/Quicksand.ttf"
+    # }
+    # page.theme = ft.Theme(font_family="Quicksand")
+    page.title = "Nine2Shine - Office fun"
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.theme_mode = ft.ThemeMode.LIGHT  # Light theme for professional look
+    page.icon = ft.Image(src="icons/app_icon.png")
 
     # Initial entry time (program start time)
     entry_time = datetime.now()
@@ -53,7 +58,7 @@ def main(page: ft.Page):
 
     # Working Description Label replaced by work_icon
     work_icon = ft.Lottie(
-        src='work_icon.json',  # Replace with your animation source
+        src='icons/work_icon.json',
         reverse=False,
         animate=True
     )
@@ -73,7 +78,7 @@ def main(page: ft.Page):
                 controls=[
                     entry_label,
                     ft.Divider(height=10),
-                    work_icon,  # Show the work_icon here
+                    work_icon,
                     ft.Divider(height=10),
                     exit_label,
                 ],
@@ -84,7 +89,7 @@ def main(page: ft.Page):
             bgcolor="white",
             border_radius=10,
             shadow=ft.BoxShadow(
-                color="lightgrey", blur_radius=8, spread_radius=2, offset=ft.Offset(0, 4)
+                color="light", blur_radius=21, spread_radius=1, offset=ft.Offset(0, 4)
             ),
         ),
         width=400,
