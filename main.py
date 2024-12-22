@@ -5,6 +5,7 @@ import asyncio
 OFFICE_HOUR=9
 
 def main(page: ft.Page):
+    page.window_title = "Nine2Shine"
     page.title = "Nine2Shine - Office Fun"
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
