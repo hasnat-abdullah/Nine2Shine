@@ -2,25 +2,22 @@ import flet as ft
 from datetime import datetime, timedelta
 import asyncio
 
-OFFICE_HOUR=9
+OFFICE_HOUR = 9
+EMERGENCY_EXIT_HOUR = 8
+EMERGENCY_EXIT_MINUTE = 30
 
 def main(page: ft.Page):
     page.window_title = "Nine2Shine"
     page.title = "Nine2Shine - Office Fun"
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
-    # default theme mode
     page.theme_mode = ft.ThemeMode.SYSTEM
 
     # define Light mode theme
-    page.theme = ft.Theme(
-        color_scheme_seed=ft.Colors.INDIGO,
-    )
+    page.theme = ft.Theme(color_scheme_seed=ft.Colors.INDIGO)
 
     # define Dark mode theme
-    page.dark_theme = ft.Theme(
-        color_scheme_seed=ft.Colors.ORANGE,
-    )
+    page.dark_theme = ft.Theme(color_scheme_seed=ft.Colors.ORANGE)
 
     # Load or initialize entry time
     def load_entry_time():
@@ -39,29 +36,35 @@ def main(page: ft.Page):
 
     save_entry_time(entry_time)
 
-    # Function to calculate and format the exit time
-    def calculate_exit_time(entry):
-        exit_time = entry + timedelta(hours=OFFICE_HOUR)
-        return exit_time
+    # Function to calculate exit times
+    def calculate_exit_time(entry, hours, minutes=0):
+        return entry + timedelta(hours=hours, minutes=minutes)
 
-    # Update the display for entry, exit, and remaining times
+    # Update the display for entry, exit, emergency exit, and remaining times
     def update_time_display():
         now = datetime.now()
-        exit_time = calculate_exit_time(entry_time)
+        exit_time = calculate_exit_time(entry_time, OFFICE_HOUR)
+        emergency_exit_time = calculate_exit_time(entry_time, EMERGENCY_EXIT_HOUR, EMERGENCY_EXIT_MINUTE)
         remaining = exit_time - now
+        emergency_remaining = emergency_exit_time - now
 
         entry_label.content.value = f"🕒 Entry: {entry_time.strftime('%I:%M %p')}"
         exit_label.value = f"🏁 Exit: {exit_time.strftime('%I:%M %p')}"
+        emergency_exit_label.value = f"🔥 Emergency Exit: {emergency_exit_time.strftime('%I:%M %p')}"
 
         if remaining.total_seconds() > 0:
-            if remaining.total_seconds() < OFFICE_HOUR * 3600:  # 9 hours in seconds
-                hours, remainder = divmod(remaining.seconds, 3600)
-                minutes = remainder // 60
-                remaining_label.value = f"⏳ Remaining: {hours}h {minutes}m"
-            else:
-                remaining_label.value = "💩 More than 9 hours remaining."
+            hours, remainder = divmod(remaining.seconds, 3600)
+            minutes = remainder // 60
+            remaining_label.value = f"⏳ Remaining: {hours}h {minutes}m"
         else:
             remaining_label.value = "🎉 Time's up!"
+
+        if emergency_remaining.total_seconds() > 0:
+            hours, remainder = divmod(emergency_remaining.seconds, 3600)
+            minutes = remainder // 60
+            emergency_remaining_label.value = f"⚠️ Emergency Exit in: {hours}h {minutes}m"
+        else:
+            emergency_remaining_label.value = "🚨 Emergency Exit Time Reached!"
 
         page.update()
 
@@ -94,19 +97,33 @@ def main(page: ft.Page):
         on_click=lambda _: page.open(time_picker),
     )
 
-    # Exit Time Label
+    # Exit Time Labels
     exit_label = ft.Text(
-        f"🏁 Exit: {calculate_exit_time(entry_time).strftime('%I:%M %p')}",
+        f"🏁 Exit: {calculate_exit_time(entry_time, OFFICE_HOUR).strftime('%I:%M %p')}",
         size=24,
-        color="red",
+        color="green",
         weight=ft.FontWeight.BOLD,
     )
 
-    # Remaining Time Label
+    emergency_exit_label = ft.Text(
+        f"🔥 Emergency Exit: {calculate_exit_time(entry_time, EMERGENCY_EXIT_HOUR, EMERGENCY_EXIT_MINUTE).strftime('%I:%M %p')}",
+        size=22,
+        color="purple",
+        weight=ft.FontWeight.BOLD,
+    )
+
+    # Remaining Time Labels
     remaining_label = ft.Text(
-        "⏳ Remaining: Calculating..",  # Default message
+        "⏳ Remaining: Calculating..",
         size=20,
-        color="blue",
+        color="green",
+        weight=ft.FontWeight.BOLD,
+    )
+
+    emergency_remaining_label = ft.Text(
+        "⚠️ Emergency Exit in: Calculating..",
+        size=20,
+        color="purple",
         weight=ft.FontWeight.BOLD,
     )
 
@@ -116,6 +133,7 @@ def main(page: ft.Page):
         reverse=True,
         animate=True,
     )
+
     info_container = ft.Container(
         bgcolor=ft.Colors.ON_PRIMARY,
         content=ft.Column(
@@ -125,8 +143,10 @@ def main(page: ft.Page):
                 work_icon,
                 ft.Divider(height=10),
                 remaining_label,
+                emergency_remaining_label,
                 ft.Divider(height=10),
                 exit_label,
+                emergency_exit_label
             ],
             spacing=20,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -142,13 +162,10 @@ def main(page: ft.Page):
     info_card = ft.Card(
         content=info_container,
         width=400
-
     )
 
     # Add components to the page
-    page.add(
-        info_card
-    )
+    page.add(info_card)
 
     # Periodic Update Task
     async def periodic_update():
