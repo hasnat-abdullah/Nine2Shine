@@ -7,19 +7,15 @@ EMERGENCY_EXIT_HOUR = 8
 EMERGENCY_EXIT_MINUTE = 30
 
 def main(page: ft.Page):
+    # Page settings
     page.window_title = "Nine2Shine"
-    page.title = "Nine2Shine - Office Fun"
-    page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
-    page.vertical_alignment = ft.MainAxisAlignment.CENTER
-    page.theme_mode = ft.ThemeMode.SYSTEM
+    page.window.resizable = True
+    page.window.maximizable = False
+    page.theme_mode = ft.ThemeMode.LIGHT
+    page.padding = 20
+    page.bgcolor = ft.Colors.BLUE_GREY_50  # Light background color
 
-    # define Light mode theme
-    page.theme = ft.Theme(color_scheme_seed=ft.Colors.INDIGO)
-
-    # define Dark mode theme
-    page.dark_theme = ft.Theme(color_scheme_seed=ft.Colors.ORANGE)
-
-    # Load or initialize entry time
+    # Load or set entry time
     def load_entry_time():
         stored_time = page.client_storage.get("entry_time")
         if stored_time:
@@ -30,21 +26,21 @@ def main(page: ft.Page):
 
     entry_time = load_entry_time()
 
-    # Save entry time to persistent storage
     def save_entry_time(entry):
         page.client_storage.set("entry_time", entry.strftime("%Y-%m-%d %H:%M:%S"))
 
     save_entry_time(entry_time)
 
-    # Function to calculate exit times
+    # Calculate exit times
     def calculate_exit_time(entry, hours, minutes=0):
         return entry + timedelta(hours=hours, minutes=minutes)
 
-    # Update the display for entry, exit, emergency exit, and remaining times
+    # Update time display
     def update_time_display():
         now = datetime.now()
         exit_time = calculate_exit_time(entry_time, OFFICE_HOUR)
         emergency_exit_time = calculate_exit_time(entry_time, EMERGENCY_EXIT_HOUR, EMERGENCY_EXIT_MINUTE)
+
         remaining = exit_time - now
         emergency_remaining = emergency_exit_time - now
 
@@ -68,7 +64,7 @@ def main(page: ft.Page):
 
         page.update()
 
-    # Handle TimePicker updates
+    # Handle time picker change
     def handle_time_picker_change(e):
         nonlocal entry_time
         selected_time = time_picker.value
@@ -78,7 +74,7 @@ def main(page: ft.Page):
             save_entry_time(entry_time)
             update_time_display()
 
-    # TimePicker for selecting entry time
+    # Time Picker
     time_picker = ft.TimePicker(
         confirm_text="Set Entry Time",
         error_invalid_text="Invalid Time",
@@ -86,99 +82,104 @@ def main(page: ft.Page):
         on_change=handle_time_picker_change,
     )
 
-    # Entry Time Label (clickable text)
+    # Entry Label (Clickable to open Time Picker)
     entry_label = ft.TextButton(
         content=ft.Text(
             f"🕒 Entry: {entry_time.strftime('%I:%M %p')}",
             weight=ft.FontWeight.BOLD,
-            color="green",
+            color=ft.Colors.BLUE_800,
             size=20,
         ),
-        on_click=lambda _: page.open(time_picker),
+        on_click=lambda _: set_time_picker_value_and_open(),
     )
 
-    # Exit Time Labels
+    def set_time_picker_value_and_open():
+        time_picker.value = entry_time.time()
+        page.open(time_picker)
+
+    # Exit Label
     exit_label = ft.Text(
         f"🏁 Exit: {calculate_exit_time(entry_time, OFFICE_HOUR).strftime('%I:%M %p')}",
-        size=24,
-        color="green",
+        size=20,
+        color=ft.Colors.RED_800,
         weight=ft.FontWeight.BOLD,
     )
 
+    # Emergency Exit Label
     emergency_exit_label = ft.Text(
         f"🔥 Emergency Exit: {calculate_exit_time(entry_time, EMERGENCY_EXIT_HOUR, EMERGENCY_EXIT_MINUTE).strftime('%I:%M %p')}",
-        size=22,
-        color="purple",
+        size=18,
+        color=ft.Colors.ORANGE_800,
         weight=ft.FontWeight.BOLD,
     )
 
-    # Remaining Time Labels
+    # Remaining Time Label
     remaining_label = ft.Text(
         "⏳ Remaining: Calculating..",
-        size=20,
-        color="green",
+        size=18,
+        color=ft.Colors.BLUE_800,
         weight=ft.FontWeight.BOLD,
     )
 
+    # Emergency Remaining Time Label
     emergency_remaining_label = ft.Text(
         "⚠️ Emergency Exit in: Calculating..",
-        size=20,
-        color="purple",
+        size=18,
+        color=ft.Colors.PURPLE_800,
         weight=ft.FontWeight.BOLD,
     )
 
-    # Work Icon
+    # Work Icon Animation
     work_icon = ft.Lottie(
-        src='icons/work_icon.json',
+        src="icons/work_icon.json",
         reverse=True,
         animate=True,
+        width=120,
+        height=120,
     )
 
-    info_container = ft.Container(
-        bgcolor=ft.Colors.ON_PRIMARY,
-        content=ft.Column(
-            controls=[
-                entry_label,
-                ft.Divider(height=10),
-                work_icon,
-                ft.Divider(height=10),
-                remaining_label,
-                emergency_remaining_label,
-                ft.Divider(height=10),
-                exit_label,
-                emergency_exit_label
-            ],
-            spacing=20,
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-        ),
-        padding=20,
-        border_radius=10,
-        shadow=ft.BoxShadow(
-            color=ft.Colors.SHADOW, blur_radius=21, spread_radius=1, offset=ft.Offset(0, 4)
-        ),
-    )
-
-    # Card Layout
+    # Card Design
     info_card = ft.Card(
-        content=info_container,
-        width=400
+        elevation=10,
+        content=ft.Container(
+            content=ft.Column(
+                controls=[
+                    entry_label,
+                    ft.Divider(height=10, color=ft.Colors.BLUE_GREY_200),
+                    work_icon,
+                    remaining_label,
+                    emergency_remaining_label,
+                    ft.Divider(height=10, color=ft.Colors.BLUE_GREY_200),
+                    exit_label,
+                    emergency_exit_label,
+                ],
+                spacing=10,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            ),
+            padding=20,
+            width=400,
+            height=400,
+            border_radius=15,
+            bgcolor=ft.Colors.WHITE,
+        ),
+        margin=10,
     )
 
-    # Add components to the page
+    # Add card to the page
     page.add(info_card)
 
-    # Periodic Update Task
+    # Set window size
+    page.window.width = 450
+    page.window.height = 500
+    page.window.center()
+
+    # Periodic update for time display
     async def periodic_update():
         while True:
             update_time_display()
-            await asyncio.sleep(60)  # Update every minute
+            await asyncio.sleep(1)
 
-    # Initial call to display the times immediately
-    update_time_display()
+    # Schedule the periodic_update task
+    page.run_task(periodic_update)
 
-    # Start the periodic update
-    page.on_connect = lambda _: asyncio.create_task(periodic_update())
-
-
-# Run the app
 ft.app(main, assets_dir="assets")
